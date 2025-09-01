@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const recordSchema = new mongoose.Schema({
   country: String,
   score: Number,
+  userId: String,
   createdAt: { type: Date, default: Date.now },
 });
 
