@@ -4,6 +4,7 @@ const cors = require("cors");
 require("dotenv").config();
 const connectDB = require("./db");
 const Record = require("./models/Record");
+const apiKeyAuth = require("./middleware/apiKey");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,9 +16,29 @@ app.use(express.json());
 // DB connection
 connectDB(process.env.MONGODB_URI);
 
-// Routes
+// Public route
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
+});
+
+// Protected routes
+app.post("/records", apiKeyAuth, async (req, res) => {
+  try {
+    const record = new Record(req.body);
+    await record.save();
+    res.json(record);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/records", apiKeyAuth, async (req, res) => {
+  try {
+    const records = await Record.find().lean();
+    res.json(records);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Temporary test: insert a record
