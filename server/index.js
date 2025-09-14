@@ -82,6 +82,34 @@ app.get("/test-list", async (req, res) => {
   }
 });
 
+// Proxy: Get weather by country
+app.get("/api/weather/:country", async (req, res) => {
+  try {
+    const { country } = req.params;
+    const url = `https://api.openweathermap.org/data/2.5/weather?q=${country}&appid=${process.env.OPENWEATHERMAP_KEY}&units=metric`;
+    const r = await fetch(url);
+    const data = await r.json();
+    if (!r.ok) return res.status(r.status).json(data);
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Proxy: Get exchange rates
+app.get("/api/exchange", async (_req, res) => {
+  try {
+    const url = `https://v6.exchangerate-api.com/v6/${process.env.EXCHANGERATE_KEY}/latest/USD`;
+    const r = await fetch(url);
+    const data = await r.json();
+    if (!r.ok) return res.status(r.status).json(data);
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
