@@ -5,6 +5,7 @@ require("dotenv").config();
 const connectDB = require("./db");
 const Record = require("./models/Record");
 const apiKeyAuth = require("./middleware/apiKey");
+const verifyGoogleIdToken = require("./middleware/googleAuth");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -40,6 +41,21 @@ app.get("/records", apiKeyAuth, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Protected with Google OAuth2
+app.get(
+  "/records-secure",
+  apiKeyAuth,
+  verifyGoogleIdToken,
+  async (req, res) => {
+    try {
+      const records = await Record.find().lean();
+      res.json({ user: req.user.email, records });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
 
 // Temporary test: insert a record
 app.post("/test-insert", async (req, res) => {
