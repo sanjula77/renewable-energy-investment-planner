@@ -91,7 +91,39 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
 
     const saved = await resp.json();
     alert(`Saved! Record ID: ${saved._id}`);
+    await loadHistory();
   } catch (err) {
     alert(err.message);
   }
 });
+
+// Load history when page opens
+window.addEventListener("DOMContentLoaded", loadHistory);
+
+
+async function loadHistory() {
+  try {
+    const resp = await fetch("http://localhost:3000/records", {
+      headers: { "x-api-key": "46a93d405a5d4e2495762af39232ecbb760e6f3cce13771b36bf4f2f265d053e" }
+    });
+    if (!resp.ok) throw new Error("Failed to fetch history");
+    const records = await resp.json();
+
+    const tbody = document.querySelector("#history tbody");
+    tbody.innerHTML = ""; // clear old rows
+
+    records.forEach(r => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${r.country}</td>
+        <td>${r.score}</td>
+        <td>${new Date(r.createdAt).toLocaleString()}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (err) {
+    console.error(err);
+    document.querySelector("#history tbody").innerHTML =
+      `<tr><td colspan="3">Error loading history</td></tr>`;
+  }
+}
