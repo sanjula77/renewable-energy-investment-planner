@@ -21,11 +21,14 @@ async function fetchExchangeRate() {
   return resp.json();
 }
 
+let lastResult = null; // store last computed result
+
 document.getElementById("fetchBtn").addEventListener("click", async () => {
   const selectEl = document.getElementById("country");
   const city = selectEl.value;
   const countryName = selectEl.options[selectEl.selectedIndex].text;
   const output = document.getElementById("output");
+  const saveBtn = document.getElementById("saveBtn");
 
   try {
     // 1. Country lookup
@@ -45,7 +48,7 @@ document.getElementById("fetchBtn").addEventListener("click", async () => {
     const clouds = weather.clouds?.all || 0;
     const score = Math.max(0, wind * 10 - clouds * 0.5);
 
-    const result = {
+    lastResult = {
       city,
       country: countryInfo.name.common,
       currency: currencyCode,
@@ -55,8 +58,40 @@ document.getElementById("fetchBtn").addEventListener("click", async () => {
       score,
     };
 
-    output.textContent = JSON.stringify(result, null, 2);
+    output.textContent = JSON.stringify(lastResult, null, 2);
+    saveBtn.disabled = false; // enable save
   } catch (err) {
     output.textContent = `Error: ${err.message}`;
+    saveBtn.disabled = true;
+  }
+});
+
+// Handle Save button
+
+document.getElementById("saveBtn").addEventListener("click", async () => {
+  if (!lastResult) return alert("No result to save!");
+
+  try {
+    const resp = await fetch("http://localhost:3000/records", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": "46a93d405a5d4e2495762af39232ecbb760e6f3cce13771b36bf4f2f265d053e", // later we add Google ID token too
+      },
+      body: JSON.stringify({
+        country: lastResult.country,
+        score: lastResult.score,
+        data: lastResult,
+      }),
+    });
+
+    if (!resp.ok) {
+      throw new Error(`Save failed (${resp.status})`);
+    }
+
+    const saved = await resp.json();
+    alert(`Saved! Record ID: ${saved._id}`);
+  } catch (err) {
+    alert(err.message);
   }
 });
