@@ -1,13 +1,11 @@
 // client/app.js
 
-// Map city names to currency codes for exchange rate lookup
-const cityToCurrencyCode = {
-  "New York": "USD",
-  "Berlin": "EUR", 
-  "Mumbai": "INR",
-  "Colombo": "LKR",
-  "Sao Paulo": "BRL"
-};
+async function fetchCountryInfo(name) {
+  const url = `http://localhost:3000/api/country/${name}`;
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error("Country API failed");
+  return resp.json();
+}
 
 async function fetchWeather(countryCode) {
   const url = `http://localhost:3000/api/weather/${countryCode}`;
@@ -24,26 +22,33 @@ async function fetchExchangeRate() {
 }
 
 document.getElementById("fetchBtn").addEventListener("click", async () => {
-  const country = document.getElementById("country").value;
+  const selectEl = document.getElementById("country");
+  const city = selectEl.value;
+  const countryName = selectEl.options[selectEl.selectedIndex].text;
   const output = document.getElementById("output");
 
   try {
-    const [weather, exchange] = await Promise.all([
-      fetchWeather(country),
-      fetchExchangeRate(),
-    ]);
+    // 1. Country lookup
+    const countryData = await fetchCountryInfo(countryName);
+    const countryInfo = countryData[0]; // RestCountries returns an array
+    const currencyCode = Object.keys(countryInfo.currencies)[0];
 
-    // Extract some values
+    // 2. Weather (use city for OpenWeather)
+    const weather = await fetchWeather(city);
+
+    // 3. Exchange rate
+    const exchange = await fetchExchangeRate();
+    const localCurrencyRate = exchange.conversion_rates[currencyCode] || null;
+
+    // 4. Compute score
     const wind = weather.wind?.speed || 0;
     const clouds = weather.clouds?.all || 0;
-    const currencyCode = cityToCurrencyCode[country];
-    const localCurrencyRate = currencyCode ? exchange.conversion_rates[currencyCode] || null : null;
-
-    // Very simple score formula
     const score = Math.max(0, wind * 10 - clouds * 0.5);
 
     const result = {
-      country,
+      city,
+      country: countryInfo.name.common,
+      currency: currencyCode,
       wind_speed: wind,
       cloud_cover: clouds,
       currency_rate: localCurrencyRate,

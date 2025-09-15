@@ -82,6 +82,21 @@ app.get("/test-list", async (req, res) => {
   }
 });
 
+// Proxy: Get country info (currency, etc.)
+app.get("/api/country/:name", async (req, res) => {
+  try {
+    const { name } = req.params;
+    const encodedName = encodeURIComponent(name);
+    const url = `https://restcountries.com/v3.1/name/${encodedName}`;
+    const r = await fetch(url);
+    const data = await r.json();
+    if (!r.ok) return res.status(r.status).json(data);
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Proxy: Get weather by country
 app.get("/api/weather/:country", async (req, res) => {
   try {
