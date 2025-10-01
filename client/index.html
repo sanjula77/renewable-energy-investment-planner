@@ -2,43 +2,128 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Renewable Energy Investment Planner</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50: '#f0f9ff',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
-<body>
-  <h1>Renewable Energy Investment Planner</h1>
+<body class="bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors">
+  <!-- Header -->
+  <header class="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 transition-colors">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex items-center">
+          <i class="fas fa-solar-panel text-2xl text-green-600 dark:text-green-400 mr-3"></i>
+          <h1 class="text-xl font-bold text-gray-900 dark:text-white">Renewable Energy Investment Planner</h1>
+        </div>
+        <button id="themeToggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+          <i class="fas fa-moon text-gray-600 dark:text-gray-300"></i>
+        </button>
+      </div>
+    </div>
+  </header>
 
-  <label for="country">Select Country:</label>
-  <select id="country">
-    <option value="New York">United States</option>
-    <option value="Berlin">Germany</option>
-    <option value="Mumbai">India</option>
-    <option value="Colombo">Sri Lanka</option>
-    <option value="Sao Paulo">Brazil</option>
-  </select>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Input Section -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 p-6 mb-8 transition-colors">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+        <i class="fas fa-globe-americas mr-2 text-blue-600 dark:text-blue-400"></i>
+        Select Investment Location
+      </h2>
+      <div class="flex flex-col sm:flex-row gap-4">
+        <div class="flex-1">
+          <label for="country" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Country & City</label>
+          <select id="country" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors">
+            <option value="New York">🇺🇸 United States - New York</option>
+            <option value="Berlin">🇩🇪 Germany - Berlin</option>
+            <option value="Mumbai">🇮🇳 India - Mumbai</option>
+            <option value="Colombo">🇱🇰 Sri Lanka - Colombo</option>
+            <option value="Sao Paulo">🇧🇷 Brazil - São Paulo</option>
+          </select>
+        </div>
+        <div class="flex items-end">
+          <button id="fetchBtn" class="w-full sm:w-auto px-6 py-2 bg-blue-600 dark:bg-blue-700 text-white font-medium rounded-md hover:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+            <i class="fas fa-chart-line mr-2"></i>
+            <span id="fetchBtnText">Analyze Location</span>
+            <i id="loadingSpinner" class="fas fa-spinner fa-spin ml-2 hidden"></i>
+          </button>
+        </div>
+      </div>
+    </div>
 
-  <button id="fetchBtn">Fetch & Score</button>
+    <!-- Status Message -->
+    <div id="statusMsg" class="hidden mb-6 p-4 rounded-md"></div>
 
-  <h2>Result</h2>
-  <pre id="output"></pre>
+    <!-- Result Section -->
+    <div id="resultSection" class="hidden mb-8">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 p-6 transition-colors">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+            <i class="fas fa-chart-bar mr-2 text-green-600 dark:text-green-400"></i>
+            Investment Analysis Results
+          </h2>
+          <button id="saveBtn" disabled class="px-4 py-2 bg-green-600 dark:bg-green-700 text-white text-sm font-medium rounded-md hover:bg-green-700 dark:hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+            <i class="fas fa-save mr-2"></i>
+            Save to History
+          </button>
+        </div>
+        
+        <!-- Result Cards -->
+        <div id="resultCards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Cards will be populated by JavaScript -->
+        </div>
+      </div>
+    </div>
 
-  <button id="saveBtn" disabled>Save to History</button>
+    <!-- History Section -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 transition-colors">
+      <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+          <i class="fas fa-history mr-2 text-purple-600 dark:text-purple-400"></i>
+          Investment History
+        </h2>
+      </div>
+      <div class="overflow-x-auto">
+        <table id="history" class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead class="bg-gray-50 dark:bg-gray-700">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Country</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Solar Score</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Wind Score</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Risk Score</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Final Score</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
+            </tr>
+          </thead>
+          <tbody id="historyBody" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+            <!-- Rows will be populated by JavaScript -->
+          </tbody>
+        </table>
+      </div>
+      <div id="emptyHistory" class="hidden px-6 py-12 text-center">
+        <i class="fas fa-inbox text-4xl text-gray-300 dark:text-gray-600 mb-4"></i>
+        <p class="text-gray-500 dark:text-gray-400">No investment analyses saved yet</p>
+      </div>
+    </div>
+  </div>
 
-  <p id="statusMsg" style="color: red;"></p>
-
-  
-<h2>History</h2>
-<table border="1" id="history">
-  <thead>
-    <tr>
-      <th>Country</th>
-      <th>Solar (kWh/m²/day)</th>
-      <th>Solar Score (0–100)</th>
-      <th>Score</th>
-      <th>Date</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
   <script src="app.js"></script>
 </body>
 </html>

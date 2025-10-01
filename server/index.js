@@ -8,7 +8,7 @@ const apiKeyAuth = require("./middleware/apiKey");
 const verifyGoogleIdToken = require("./middleware/googleAuth");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 // In-memory cache for embassy lookups
 const EMBASSY_TTL_MS = 5 * 60 * 1000; // 5 minutes
@@ -172,7 +172,12 @@ app.get("/api/score", async (req, res) => {
     const rCountry = await fetch(`https://restcountries.com/v3.1/name/${encodeURIComponent(countryQuery)}`);
     const countryArr = await rCountry.json();
     if (!rCountry.ok || !Array.isArray(countryArr) || !countryArr[0]) {
-      return res.status(502).json({ error: "Failed to resolve country info" });
+      return res.status(502).json({ 
+        error: "Failed to resolve country info",
+        details: `Country query: "${countryQuery}"`,
+        apiResponse: countryArr,
+        suggestion: "Try using the full country name (e.g., 'United States' instead of 'USA')"
+      });
     }
     const countryInfo = countryArr[0];
     const currencyCode = Object.keys(countryInfo.currencies || {})[0] || null;
@@ -184,6 +189,12 @@ app.get("/api/score", async (req, res) => {
     const continentName = Array.isArray(countryInfo?.continents) ? (countryInfo.continents[0] || null) : null; // e.g., "South America"
 
     // 2) Weather
+    if (!process.env.OPENWEATHERMAP_KEY) {
+      return res.status(500).json({ 
+        error: "OpenWeatherMap API key not configured",
+        hint: "Set OPENWEATHERMAP_KEY in .env file"
+      });
+    }
     const rWeather = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(cityQuery)}&appid=${process.env.OPENWEATHERMAP_KEY}&units=metric`);
     const weather = await rWeather.json();
     if (!rWeather.ok) {
@@ -195,6 +206,12 @@ app.get("/api/score", async (req, res) => {
     const lon = weather?.coord?.lon;
 
     // 3) Exchange
+    if (!process.env.EXCHANGERATE_KEY) {
+      return res.status(500).json({ 
+        error: "Exchange Rate API key not configured",
+        hint: "Set EXCHANGERATE_KEY in .env file"
+      });
+    }
     const rEx = await fetch(`https://v6.exchangerate-api.com/v6/${process.env.EXCHANGERATE_KEY}/latest/USD`);
     const exchange = await rEx.json();
     if (!rEx.ok) {
@@ -273,6 +290,7 @@ app.get("/api/score", async (req, res) => {
       country: countryNameCommon,
       city: cityQuery,
       wind_speed: round2(wind),
+      wind_score: Math.round(wind_score),
       solar_potential: solarPotentialKwhPerM2Day,
       solar_score: Math.round(solar_score),
       currency_rate: currencyRate,
