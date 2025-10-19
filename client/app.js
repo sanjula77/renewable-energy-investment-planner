@@ -563,15 +563,21 @@ async function loadHistory() {
 
     records.forEach((r, index) => {
       const tr = document.createElement("tr");
-      tr.className = index % 2 === 0 ? "bg-white" : "bg-gray-50";
+      tr.className = index % 2 === 0 ? "bg-white dark:bg-gray-800" : "bg-gray-50 dark:bg-gray-700";
       
       const riskCategory = r?.data?.risk_category || 'Unknown';
       const riskBadgeClass = getRiskBadgeClass(riskCategory);
       
+      // Debug: Log the record structure to console
+      console.log('Record data:', r);
+      
+      // Get country name with multiple fallbacks
+      const countryName = r.country || r.data?.country || r.data?.city || 'Unknown';
+      
       tr.innerHTML = `
         <td class="px-6 py-4 whitespace-nowrap">
           <div class="flex items-center">
-            <div class="text-sm font-medium text-gray-900">${r.country}</div>
+            <div class="text-sm font-medium text-gray-900 dark:text-white">${countryName}</div>
           </div>
         </td>
         <td class="px-6 py-4 whitespace-nowrap">
@@ -606,8 +612,13 @@ async function loadHistory() {
             </span>
           </div>
         </td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
           ${new Date(r.createdAt).toLocaleDateString()} ${new Date(r.createdAt).toLocaleTimeString()}
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap">
+          <button onclick="deleteRecord('${r._id}')" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors" title="Delete record">
+            <i class="fas fa-trash-alt"></i>
+          </button>
         </td>
       `;
       tbody.appendChild(tr);
@@ -618,12 +629,41 @@ async function loadHistory() {
     const emptyHistory = document.getElementById("emptyHistory");
     tbody.innerHTML = `
       <tr>
-        <td colspan="6" class="px-6 py-4 text-center text-red-600">
+        <td colspan="7" class="px-6 py-4 text-center text-red-600">
           <i class="fas fa-exclamation-triangle mr-2"></i>
           Error loading history
         </td>
       </tr>
     `;
     emptyHistory.classList.add("hidden");
+  }
+}
+
+// Delete record function
+async function deleteRecord(recordId) {
+  if (!confirm('Are you sure you want to delete this investment record? This action cannot be undone.')) {
+    return;
+  }
+
+  try {
+    const resp = await fetch(`http://localhost:3001/records/${recordId}`, {
+      method: 'DELETE',
+      headers: {
+        'x-api-key': '46a93d405a5d4e2495762af39232ecbb760e6f3cce13771b36bf4f2f265d053e',
+      },
+    });
+
+    if (!resp.ok) {
+      throw new Error(`Delete failed (${resp.status})`);
+    }
+
+    // Show success message
+    showMessage('Record deleted successfully ✅', false);
+    
+    // Reload the history to update the table
+    await loadHistory();
+  } catch (err) {
+    console.error('Delete error:', err);
+    showMessage(`Failed to delete record: ${err.message}`, true);
   }
 }
