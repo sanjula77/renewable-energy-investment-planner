@@ -44,7 +44,7 @@ A comprehensive web application that analyzes renewable energy investment opport
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/re-invest-planner.git
+   git clone https://github.com/sanjula77/re-invest-planner.git
    cd re-invest-planner
    ```
 
